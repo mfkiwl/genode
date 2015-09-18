@@ -103,7 +103,13 @@ HRESULT Console::onlineMergeMedium(IMediumAttachment *aMediumAttachment,
                                    IProgress *aProgress)                        DUMMY(E_FAIL)
 
 void fireStateChangedEvent(IEventSource* aSource,
-                           MachineState_T a_state)                              TRACE()
+                           MachineState_T a_state)
+{
+	if (a_state != MachineState_PoweredOff)
+		return;
+
+	Genode::env()->parent()->exit(0);
+}
 
 void fireRuntimeErrorEvent(IEventSource* aSource, BOOL a_fatal,
                            CBSTR a_id, CBSTR a_message)
