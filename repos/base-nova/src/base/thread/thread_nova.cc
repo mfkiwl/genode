@@ -134,12 +134,25 @@ void Thread_base::_deinit_platform_thread()
 		cap_map()->remove(_tid.ec_sel, 1, false);
 	}
 
-	revoke(Obj_crd(_tid.exc_pt_sel, NUM_INITIAL_PT_LOG2));
-	cap_map()->remove(_tid.exc_pt_sel, NUM_INITIAL_PT_LOG2, false);
+	cap_map()->remove(_tid.exc_pt_sel, NUM_INITIAL_PT_LOG2);
+
+	/* make the myself() lookup before kill_thread */
+	bool const self = Thread_base::myself() == this;
 
 	/* de-announce thread */
 	if (_thread_cap.valid())
 		_cpu_session->kill_thread(_thread_cap);
+
+	/*
+	 * Make sure to stop a self-destructing thread here. All capability
+	 * selectors are already invalid. If the thread continues with no valid
+	 * associated semaphore it may die within the Genode::Lock implementation
+	 * when using thread_stop_myself which fails because the semaphore is
+	 * already invalid. Afterwards all lock user, e.g. cap_map() lock or
+	 * printf lock() will starve forever.
+	 */
+	if (self)
+		nova_die();
 
 	if (_pager_cap.valid())
 		env()->rm_session()->remove_client(_pager_cap);
