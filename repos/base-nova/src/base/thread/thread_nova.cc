@@ -134,8 +134,6 @@ void Thread_base::_deinit_platform_thread()
 		cap_map()->remove(_tid.ec_sel, 1, false);
 	}
 
-	cap_map()->remove(_tid.exc_pt_sel, NUM_INITIAL_PT_LOG2);
-
 	/* make the myself() lookup before kill_thread */
 	bool const self = Thread_base::myself() == this;
 
@@ -153,6 +151,8 @@ void Thread_base::_deinit_platform_thread()
 	 */
 	if (self)
 		nova_die();
+
+	cap_map()->remove(_tid.exc_pt_sel, NUM_INITIAL_PT_LOG2);
 
 	if (_pager_cap.valid())
 		env()->rm_session()->remove_client(_pager_cap);
